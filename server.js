@@ -72,16 +72,13 @@ function searchWeatherData() {
   // This will only trigger if the latitude and longitude that are grabbed from data are equal to the latitude and longitude of Lynnwood because that is all our front-end application will show right now
   if(grabWeatherData.latitude === responseDataObject.latitude && grabWeatherData.longitude === responseDataObject.longitude){
     let dailyData = grabWeatherData.daily.data;
-    let results = [];
-    for(let i = 0; i < dailyData.length; i++){
-      let summary = dailyData[i].summary;
-      let time = dailyData[i].time;
-      let eachTime = new WeatherData(summary, time);
 
-      results.push(eachTime);
-    }
+    const test = dailyData.map(data => {
+      let eachTime = new WeatherData(data.summary, (new Date(data.time * 1000).toString().slice(0, 15)));
+      return eachTime;
+    });
+    return test;
 
-    return results;
   }
 }
 
