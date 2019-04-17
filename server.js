@@ -20,6 +20,12 @@ app.use(cors());
 //server is doing this
 
 app.get('/location', (request, response) => {
+
+  // Feature 3 of Lab06 implemented
+  if(request.query.data !== 'lynnwood'){
+    response.status(500).send('The location you have given does not exist!')
+  }
+
   response.send(searchLocationData(request.query.data) );
 
 })
@@ -56,8 +62,8 @@ function searchLocationData(frontEndQuery) {
 
 function searchWeatherData() {
   const grabWeatherData = require('./data/darksky.json');
-  console.log("From Weather Data: " + grabWeatherData.longitude);
-  console.log("From object: " + responseDataObject.longitude);
+  console.log('From Weather Data: ' + grabWeatherData.longitude);
+  console.log('From object: ' + responseDataObject.longitude);
   if(grabWeatherData.latitude === responseDataObject.latitude && grabWeatherData.longitude === responseDataObject.longitude){
     let dailyData = grabWeatherData.daily.data;
     let results = [];
