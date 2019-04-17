@@ -1,6 +1,6 @@
 # lab-06-back-end
 
-**Author**: Melissa Stock, Pratiibh Bassi
+**Author**: Melissa S, Pratiibh Bassi, Denevan Pettie, Williams Argenal
 **Version**: 0.0.1
 
 ## Overview
@@ -43,6 +43,17 @@ Use this area to document the iterative changes made to your application as each
 
 04-16-2019 1:10pmam - Weather route is synced, constructor function created objects with proper rendering. Site is redployed.
 
+04-17-2019 9:20am - Repository setup and debugging from previous day
+
+04-17-2019 10:20am - Data formatting, get weather callback is reformatted using .map()
+
+04-17-2019 11:00am - Dynamic search query for location data
+
+04-17-2019 1:00pm - Started dynamic weather feature
+
+
 
 ## Credits and Collaborations
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->
+
+
