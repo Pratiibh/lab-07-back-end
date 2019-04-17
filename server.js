@@ -20,22 +20,9 @@ app.use(cors());
 
 //server is doing this
 
-app.get('/location', searchLocationData)
+app.get('/location', searchLocationData);
 
-// superagent.get(`https://maps.googleapis.com/maps/api/geocode/json?address=$%7BfrontEndQuery%7D&key=$%7Bprocess.env.GEOCODE_API_KEY%7D%60`)
-
-// Feature 3 of Lab06 implemented
-// if(request.query.data !== 'lynnwood'){
-//   response.status(500).send('The location you have given does not exist!')
-// }
-
-// response.send(searchLocationData(request.query.data) );
-
-// })
-
-app.get('/weather', (request, response) => {
-  response.send(searchWeatherData() );
-})
+app.get('/weather', searchWeatherData);
 
 
 // Constructor Functions
@@ -59,7 +46,6 @@ function searchLocationData(request, response) {
 
 
   superagent.get(url).then(result => {
-    console.log(result.body.results[0]);
     const firstSearch = result.body.results[0];
 
     const formatted_query = firstSearch.formatted_address;
@@ -68,37 +54,39 @@ function searchLocationData(request, response) {
     const latitude = location.lat;
     const longitude = location.lng;
 
-    // const grabLocationData = require('./data/geo.json');
-    // const formatted_query = grabLocationData.results[0].formatted_address;
-    // const latitude = grabLocationData.results[0].geometry.location.lat;
-    // const longitude = grabLocationData.results[0].geometry.location.lng;
-
     responseDataObject = new LocationData(search_query, formatted_query, latitude, longitude);
     response.send(responseDataObject);
   })
 }
 
-// This function will grab data from the darksky.json file
+// This function will grab data from the darksky.json file //
 
-function searchWeatherData() {
+function searchWeatherData(request, response) {
+  
+  superagent.get(`https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`).then(result => {
+    console.log('result body latitude = ' + result.body.latitude)
+    console.log('result body longitude = ' + result.body.longitude)
+    console.log('request query latitude = ' + request.query.data.latitude)
+    console.log('request query longitude = ' + request.query.data.longitude)
+    if(result.body.latitude === request.query.data.latitude && result.body.longitude === request.query.data.longitude){
+      let dailyData = result.body.daily.data;
+    
+  
+      const test = dailyData.map(data => {
+        let eachTime = new WeatherData(data.summary, (new Date(data.time * 1000).toString().slice(0, 15)));
+        return eachTime;
+      });
+      return(test);
+  
+    }
+  })
+
   const grabWeatherData = require('./data/darksky.json');
-  console.log('From Weather Data: ' + grabWeatherData.longitude);
-  console.log('From object: ' + responseDataObject.longitude);
 
   // This will only trigger if the latitude and longitude that are grabbed from data are equal to the latitude and longitude of Lynnwood because that is all our front-end application will show right now
-  if(grabWeatherData.latitude === responseDataObject.latitude && grabWeatherData.longitude === responseDataObject.longitude){
-    let dailyData = grabWeatherData.daily.data;
-
-    const test = dailyData.map(data => {
-      let eachTime = new WeatherData(data.summary, (new Date(data.time * 1000).toString().slice(0, 15)));
-      return eachTime;
-    });
-    return test;
-
-  }
+  console.log(request.query.data.latitude);
+  
 }
-
-
 
 // server start
 app.listen(PORT, () => {
