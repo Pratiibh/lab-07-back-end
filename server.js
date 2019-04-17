@@ -9,6 +9,7 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000 ;
 const express = require('express');
 const cors = require('cors');
+const superagent = require('superagent');
 
 let responseDataObject = {};
 
@@ -19,16 +20,18 @@ app.use(cors());
 
 //server is doing this
 
-app.get('/location', (request, response) => {
+app.get('/location', searchLocationData)
 
-  // Feature 3 of Lab06 implemented
-  if(request.query.data !== 'lynnwood'){
-    response.status(500).send('The location you have given does not exist!')
-  }
+// superagent.get(`https://maps.googleapis.com/maps/api/geocode/json?address=$%7BfrontEndQuery%7D&key=$%7Bprocess.env.GEOCODE_API_KEY%7D%60`)
 
-  response.send(searchLocationData(request.query.data) );
+// Feature 3 of Lab06 implemented
+// if(request.query.data !== 'lynnwood'){
+//   response.status(500).send('The location you have given does not exist!')
+// }
 
-})
+// response.send(searchLocationData(request.query.data) );
+
+// })
 
 app.get('/weather', (request, response) => {
   response.send(searchWeatherData() );
@@ -50,16 +53,29 @@ function WeatherData(summary, time){
 
 //functions
 
-function searchLocationData(frontEndQuery) {
-  const search_query = frontEndQuery;
+function searchLocationData(request, response) {
+  const search_query = request.query.data;
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${search_query}&key=${process.env.GEOCODE_API_KEY}`;
 
-  const grabLocationData = require('./data/geo.json');
-  const formatted_query = grabLocationData.results[0].formatted_address;
-  const latitude = grabLocationData.results[0].geometry.location.lat;
-  const longitude = grabLocationData.results[0].geometry.location.lng;
 
-  responseDataObject = new LocationData(search_query, formatted_query, latitude, longitude);
-  return responseDataObject;
+  superagent.get(url).then(result => {
+    console.log(result.body.results[0]);
+    const firstSearch = result.body.results[0];
+
+    const formatted_query = firstSearch.formatted_address;
+    const geometry = firstSearch.geometry;
+    const location = geometry.location;
+    const latitude = location.lat;
+    const longitude = location.lng;
+
+    // const grabLocationData = require('./data/geo.json');
+    // const formatted_query = grabLocationData.results[0].formatted_address;
+    // const latitude = grabLocationData.results[0].geometry.location.lat;
+    // const longitude = grabLocationData.results[0].geometry.location.lng;
+
+    responseDataObject = new LocationData(search_query, formatted_query, latitude, longitude);
+    response.send(responseDataObject);
+  })
 }
 
 // This function will grab data from the darksky.json file
