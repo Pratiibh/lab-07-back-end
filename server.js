@@ -25,27 +25,18 @@ app.get('/location', (request, response) => {
   const search_query = request.query.data
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=${process.env.GEOCODE_API_KEY}`
   const data = superagent.get(url).then(result => {
-    
     const resultBody = result.body;
-    console.log(resultBody);
-    console.log('=================================================================');
     const formatted_query = resultBody.results[0].formatted_address;
     const latitude = resultBody.results[0].geometry.location.lat;
     const longitude = resultBody.results[0].geometry.location.lng;
-    
     const responseObject = { search_query, formatted_query, latitude, longitude};
-    console.log(responseObject,"response object");
-    
-    // should be?//
     response.send(responseObject);
-    
   })
 .catch(console.log)
 })
 
 app.get('/weather', (request, response) =>{
   const frontEndQuery = request.query.data;
- // get the data
   const weatherJSON = require('./data/darksky.json');
   const dailyWeather = weatherJSON.daily;
   const dailyWeatherData = dailyWeather.data;
@@ -58,7 +49,6 @@ app.get('/weather', (request, response) =>{
 app.use('*', (request, response) => {
   response.send('Our server runs.');
 })
-
 
 // ==============================================
 // Helper Functions
