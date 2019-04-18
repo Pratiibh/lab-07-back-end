@@ -1,94 +1,75 @@
 'use strict';
 
-
+// immediate import and configuration
 require('dotenv').config();
 
-
-
-//global constants
+// global constants
 const PORT = process.env.PORT || 3000 ;
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
-
-let responseDataObject = {};
-
-
-//server definition
+// server definition
 const app = express();
 app.use(cors());
+//const pq = require('pg')//install npm
 
-//server is doing this
-
-app.get('/location', searchLocationData);
-
-app.get('/weather', searchWeatherData);
-
-
-// Constructor Functions
-function LocationData(search_query, formatted_query, latitude, longitude){
-  this.search_query = search_query;
-  this.formatted_query = formatted_query;
-  this.latitude = latitude;
-  this.longitude = longitude;
-}
-
-function WeatherData(summary, time){
-  this.forecast = summary;
-  this.time = time;
-}
-
-//functions
-
-function searchLocationData(request, response) {
-  const search_query = request.query.data;
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${search_query}&key=${process.env.GEOCODE_API_KEY}`;
-
-
-  superagent.get(url).then(result => {
-    const firstSearch = result.body.results[0];
-
-    const formatted_query = firstSearch.formatted_address;
-    const geometry = firstSearch.geometry;
-    const location = geometry.location;
-    const latitude = location.lat;
-    const longitude = location.lng;
-
-    responseDataObject = new LocationData(search_query, formatted_query, latitude, longitude);
-    response.send(responseDataObject);
-  })
-}
-
-// This function will grab data from the darksky.json file //
-
-function searchWeatherData(request, response) {
-  
-  superagent.get(`https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`).then(result => {
-    console.log('result body latitude = ' + result.body.latitude)
-    console.log('result body longitude = ' + result.body.longitude)
-    console.log('request query latitude = ' + request.query.data.latitude)
-    console.log('request query longitude = ' + request.query.data.longitude)
-    if(result.body.latitude === request.query.data.latitude && result.body.longitude === request.query.data.longitude){
-      let dailyData = result.body.daily.data;
+//postgres client setup//*
+//const client = new pg.Client( process.env.DATABASE_URL);
+//client.connect();
+//client.on('error', error => console.error(error));
+// what the server does
+//the route
+//request = data from query. example, from a front end query
+//can test in localhost:3000/location to verify
+app.get('/location', (request, response) => {
+  const search_query = request.query.data
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=${process.env.GEOCODE_API_KEY}`
+  const data = superagent.get(url).then(result => {
     
-  
-      const test = dailyData.map(data => {
-        let eachTime = new WeatherData(data.summary, (new Date(data.time * 1000).toString().slice(0, 15)));
-        return eachTime;
-      });
-      return(test);
-  
-    }
+    const resultBody = result.body;
+    console.log(resultBody);
+    console.log('=================================================================');
+    const formatted_query = resultBody.results[0].formatted_address;
+    const latitude = resultBody.results[0].geometry.location.lat;
+    const longitude = resultBody.results[0].geometry.location.lng;
+    
+    const responseObject = { search_query, formatted_query, latitude, longitude};
+    console.log(responseObject,"response object");
+    
+    // should be?//
+    response.send(responseObject);
+    
   })
+.catch(console.log)
+})
 
-  const grabWeatherData = require('./data/darksky.json');
+app.get('/weather', (request, response) =>{
+  const frontEndQuery = request.query.data;
+ // get the data
+  const weatherJSON = require('./data/darksky.json');
+  const dailyWeather = weatherJSON.daily;
+  const dailyWeatherData = dailyWeather.data;
+  let theDaily = dailyWeatherData.map(dayObj => {
+    return new DailyWeather(dayObj); 
+  })
+  response.send(theDaily);
+})
 
-  // This will only trigger if the latitude and longitude that are grabbed from data are equal to the latitude and longitude of Lynnwood because that is all our front-end application will show right now
-  console.log(request.query.data.latitude);
-  
+app.use('*', (request, response) => {
+  response.send('Our server runs.');
+})
+
+
+// ==============================================
+// Helper Functions
+// ==============================================
+
+function DailyWeather(rawDayObj){
+  this.forecast = rawDayObj.summary;
+  this.time = new Date (rawDayObj.time * 1000).toString().slice(0, 15);
 }
 
-// server start
-app.listen(PORT, () => {
+//server start
+app.listen(PORT, ()=> {
   console.log(`app is up on PORT ${PORT}`)
 })
