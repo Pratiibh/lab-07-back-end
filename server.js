@@ -31,16 +31,16 @@ api.darksky = 'https://api.darksky.net/forecast/';
 
 app.get('/location', (request, response) => {
   const search_query = request.query.data;
-  
+
 
   client.query('SELECT * FROM locations WHERE search_query=$1',[search_query])
     .then(result =>{
-    
+
       if(result.rows.length){
-        
+
         response.send(result.rows[0])
       }else{
-        
+
         getGoogle(search_query,response);
 
       }
@@ -48,20 +48,18 @@ app.get('/location', (request, response) => {
 })
 
 app.get('/weather', (request, response) =>{
-  //const darkSkyURL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/[100],[100]`
-  const weather_query = request.query.data
-  console.log(weather_query, "=======================================================");
+  const weather_query = request.query.data.id;
+  console.log(weather_query, '8=======================================================)');
 
- 
-  client.query('SELECT * FROM weathers WHERE weather_query=$1',[weather_query])
-    .then(result =>{ console.log(result);}
-  
-  /*
-  let theDaily = dailyWeatherData.map(dayObj => {
-    
-  return new DailyWeather(dayObj);
-  })
-  response.send(theDaily);*/
+  client.query('SELECT * FROM weathers WHERE location_id=$1',[weather_query])
+    .then(result =>{
+      if(result.rows.length){
+        console.log('exists');
+        response.send(result.rows[0])
+      }else{
+        console.log('run function');
+      }
+    })
 })
 
 app.use('*', (request, response) => {
@@ -79,14 +77,14 @@ function getGoogle(search_query,response){
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${search_query}&key=${process.env.GEOCODE_API_KEY}`;
   superagent.get(url).then(result => {
     const resultBody = result.body;
-    
+
     const formatted_query = resultBody.results[0].formatted_address;
     const latitude = resultBody.results[0].geometry.location.lat;
     const longitude = resultBody.results[0].geometry.location.lng;
     const responseObject = { search_query, formatted_query, latitude, longitude};
     client.query(`INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1, $2, $3, $4)`, [search_query,formatted_query, latitude , longitude]);
     response.send(responseObject);
-  }).catch((error)=>{console.log('inside inside google block')})}
+  })}
 
 //server start
 app.listen(PORT, ()=> {
