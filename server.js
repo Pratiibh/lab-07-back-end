@@ -17,6 +17,8 @@ const pg = require('pg')//talks to psql
 const client = new pg.Client(process.env.DATABASE_URL);
 client.connect();
 client.on('error', error => console.error(error));
+
+
 const sql = {};
 sql.location = 'SELECT * FROM locations WHERE search_query=$1';
 sql.insertLocation = 'INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES ($1, $2, $3, $4)';
@@ -29,35 +31,42 @@ api.darksky = 'https://api.darksky.net/forecast/';
 
 app.get('/location', (request, response) => {
   const search_query = request.query.data;
-  console.log('check database with',search_query);
+  
 
-  client.query('SELECT * FROM locations WHERE search_query=$1',[search_query]).then(result =>{
-    console.log('result from DATABASE', result);
-    if(result.rows.length){
-      console.log('exists in DB');
-      response.send(result.rows[0])
-    }else{
-      console.log('no existe')
-      getGoogle(search_query,response);
+  client.query('SELECT * FROM locations WHERE search_query=$1',[search_query])
+    .then(result =>{
+    
+      if(result.rows.length){
+        
+        response.send(result.rows[0])
+      }else{
+        
+        getGoogle(search_query,response);
 
-    }
-  }).catch(console.error)
+      }
+    }).catch((error)=>{console.log('inside catch block')})
 })
 
 app.get('/weather', (request, response) =>{
-  const weatherJSON = require('./data/darksky.json');
-  const dailyWeather = weatherJSON.daily;
-  const dailyWeatherData = dailyWeather.data;
+  //const darkSkyURL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/[100],[100]`
+  const weather_query = request.query.data
+  console.log(weather_query, "=======================================================");
+
+ 
+  client.query('SELECT * FROM weathers WHERE weather_query=$1',[weather_query])
+    .then(result =>{ console.log(result);}
+  
+  /*
   let theDaily = dailyWeatherData.map(dayObj => {
-    return new DailyWeather(dayObj);
+    
+  return new DailyWeather(dayObj);
   })
-  response.send(theDaily);
+  response.send(theDaily);*/
 })
 
 app.use('*', (request, response) => {
   response.send('Our server runs.');
 })
-
 // ==============================================
 // Helper Functions
 // ==============================================
@@ -70,14 +79,14 @@ function getGoogle(search_query,response){
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${search_query}&key=${process.env.GEOCODE_API_KEY}`;
   superagent.get(url).then(result => {
     const resultBody = result.body;
-    console.log(resultBody)
+    
     const formatted_query = resultBody.results[0].formatted_address;
     const latitude = resultBody.results[0].geometry.location.lat;
     const longitude = resultBody.results[0].geometry.location.lng;
     const responseObject = { search_query, formatted_query, latitude, longitude};
-    client.query(`INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1, $2, $3, $4)`, [location.search_query,location.formatted_query, location.latitude , location.longitude]);
+    client.query(`INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1, $2, $3, $4)`, [search_query,formatted_query, latitude , longitude]);
     response.send(responseObject);
-})}
+  }).catch((error)=>{console.log('inside inside google block')})}
 
 //server start
 app.listen(PORT, ()=> {
