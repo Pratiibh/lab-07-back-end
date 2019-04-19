@@ -8,3 +8,10 @@ CREATE TABLE locations (
    latitude NUMERIC(10, 7),
    longitude NUMERIC(10, 7)
  );
+
+ /*CREATE TABLE weathers(
+   is SERIAL
+
+
+
+ )*/
